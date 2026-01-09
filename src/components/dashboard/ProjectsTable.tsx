@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -36,6 +37,8 @@ const formatCurrency = (value: number) => {
 };
 
 export function ProjectsTable() {
+  const navigate = useNavigate();
+
   return (
     <Card className="animate-slide-up border-0 shadow-lg" style={{ animationDelay: "500ms" }}>
       <CardHeader className="pb-2">
@@ -60,6 +63,7 @@ export function ProjectsTable() {
                 <TableRow
                   key={project.id}
                   className="border-border/50 hover:bg-muted/50 transition-colors cursor-pointer"
+                  onClick={() => navigate(`/projects/${project.id}`)}
                 >
                   <TableCell>
                     <div>
