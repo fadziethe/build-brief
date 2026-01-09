@@ -1,12 +1,13 @@
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, DollarSign, Wallet, TrendingDown, PiggyBank, Plus } from "lucide-react";
+import { ArrowLeft, DollarSign, Wallet, TrendingDown, PiggyBank, Plus, Loader2 } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { projects, expenses as initialExpenses, Expense, ExpenseCategory, expenseCategories } from "@/data/mockData";
+import { useProject } from "@/hooks/useProjects";
+import { useExpenses, useCreateExpense, useDeleteExpense, ExpenseCategory } from "@/hooks/useExpenses";
 import { ExpenseForm } from "@/components/projects/ExpenseForm";
 import { ExpenseList } from "@/components/projects/ExpenseList";
 
@@ -27,17 +28,27 @@ const statusColors = {
 
 const ProjectDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const project = projects.find((p) => p.id === id);
+  const { data: project, isLoading: projectLoading } = useProject(id || "");
+  const { data: expenses = [], isLoading: expensesLoading } = useExpenses(id || "");
+  const createExpense = useCreateExpense();
+  const deleteExpense = useDeleteExpense();
   
-  const [projectExpenses, setProjectExpenses] = useState<Expense[]>(
-    initialExpenses.filter((e) => e.projectId === id)
-  );
   const [showExpenseForm, setShowExpenseForm] = useState(false);
 
   const totalExpenses = useMemo(() => 
-    projectExpenses.reduce((sum, e) => sum + e.amount, 0), 
-    [projectExpenses]
+    expenses.reduce((sum, e) => sum + Number(e.amount), 0), 
+    [expenses]
   );
+
+  if (projectLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   if (!project) {
     return (
@@ -55,22 +66,22 @@ const ProjectDetail = () => {
     );
   }
 
-  const remainingFromInitial = project.initialAmount - project.spent - totalExpenses;
-  const remainingBudget = project.budget - project.spent - totalExpenses;
-  const budgetUsedPercent = ((project.spent + totalExpenses) / project.budget) * 100;
+  const totalSpent = Number(project.spent) + totalExpenses;
+  const remainingFromInitial = Number(project.initial_amount) - totalSpent;
+  const remainingBudget = Number(project.budget) - totalSpent;
+  const budgetUsedPercent = (totalSpent / Number(project.budget)) * 100;
 
-  const handleAddExpense = (expense: Omit<Expense, "id" | "projectId">) => {
-    const newExpense: Expense = {
+  const handleAddExpense = (expense: { date: string; description: string; amount: number; category: ExpenseCategory }) => {
+    createExpense.mutate({
+      project_id: project.id,
       ...expense,
-      id: `EXP-${Date.now()}`,
-      projectId: project.id,
-    };
-    setProjectExpenses((prev) => [newExpense, ...prev]);
-    setShowExpenseForm(false);
+    }, {
+      onSuccess: () => setShowExpenseForm(false),
+    });
   };
 
   const handleDeleteExpense = (expenseId: string) => {
-    setProjectExpenses((prev) => prev.filter((e) => e.id !== expenseId));
+    deleteExpense.mutate({ id: expenseId, projectId: project.id });
   };
 
   return (
@@ -116,7 +127,7 @@ const ProjectDetail = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-primary">
-                {formatCurrency(project.initialAmount)}
+                {formatCurrency(Number(project.initial_amount))}
               </div>
               <p className="text-xs text-muted-foreground">Amount received for project</p>
             </CardContent>
@@ -128,7 +139,7 @@ const ProjectDetail = () => {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(project.budget)}</div>
+              <div className="text-2xl font-bold">{formatCurrency(Number(project.budget))}</div>
               <p className="text-xs text-muted-foreground">Planned project budget</p>
             </CardContent>
           </Card>
@@ -140,7 +151,7 @@ const ProjectDetail = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-destructive">
-                {formatCurrency(project.spent + totalExpenses)}
+                {formatCurrency(totalSpent)}
               </div>
               <p className="text-xs text-muted-foreground">
                 {budgetUsedPercent.toFixed(1)}% of budget used
@@ -172,7 +183,7 @@ const ProjectDetail = () => {
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Spent vs Budget</span>
                 <span className="font-medium">
-                  {formatCurrency(project.spent + totalExpenses)} / {formatCurrency(project.budget)}
+                  {formatCurrency(totalSpent)} / {formatCurrency(Number(project.budget))}
                 </span>
               </div>
               <Progress 
@@ -201,13 +212,20 @@ const ProjectDetail = () => {
             {showExpenseForm && (
               <ExpenseForm 
                 onSubmit={handleAddExpense} 
-                onCancel={() => setShowExpenseForm(false)} 
+                onCancel={() => setShowExpenseForm(false)}
+                isLoading={createExpense.isPending}
               />
             )}
-            <ExpenseList 
-              expenses={projectExpenses} 
-              onDelete={handleDeleteExpense} 
-            />
+            {expensesLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <ExpenseList 
+                expenses={expenses} 
+                onDelete={handleDeleteExpense} 
+              />
+            )}
           </CardContent>
         </Card>
       </div>

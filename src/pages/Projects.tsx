@@ -1,9 +1,13 @@
+import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { ProjectsTable } from "@/components/dashboard/ProjectsTable";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { ProjectFormDialog } from "@/components/projects/ProjectFormDialog";
+import { useCreateProject } from "@/hooks/useProjects";
 
 const Projects = () => {
+  const [showForm, setShowForm] = useState(false);
+  const createProject = useCreateProject();
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -14,12 +18,18 @@ const Projects = () => {
               Manage and track all your construction projects
             </p>
           </div>
-          <Button className="gap-2">
-            <Plus className="h-4 w-4" />
-            New Project
-          </Button>
         </div>
-        <ProjectsTable />
+        <ProjectsTable onAddProject={() => setShowForm(true)} />
+        <ProjectFormDialog
+          open={showForm}
+          onOpenChange={setShowForm}
+          onSubmit={(project) => {
+            createProject.mutate(project, {
+              onSuccess: () => setShowForm(false),
+            });
+          }}
+          isLoading={createProject.isPending}
+        />
       </div>
     </DashboardLayout>
   );

@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Expense, expenseCategories } from "@/data/mockData";
+import { Expense, expenseCategories } from "@/hooks/useExpenses";
 
 interface ExpenseListProps {
   expenses: Expense[];
@@ -42,7 +42,7 @@ export const ExpenseList = ({ expenses, onDelete }: ExpenseListProps) => {
     );
   }
 
-  const totalAmount = expenses.reduce((sum, e) => sum + e.amount, 0);
+  const totalAmount = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
 
   return (
     <div className="space-y-4">
@@ -70,7 +70,7 @@ export const ExpenseList = ({ expenses, onDelete }: ExpenseListProps) => {
                 </TableCell>
                 <TableCell>{expense.description}</TableCell>
                 <TableCell className="text-right font-medium">
-                  {formatCurrency(expense.amount)}
+                  {formatCurrency(Number(expense.amount))}
                 </TableCell>
                 <TableCell>
                   <Button

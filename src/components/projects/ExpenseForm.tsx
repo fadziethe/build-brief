@@ -7,15 +7,16 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Expense, ExpenseCategory, expenseCategories } from "@/data/mockData";
+import { ExpenseCategory, expenseCategories } from "@/hooks/useExpenses";
 import { cn } from "@/lib/utils";
 
 interface ExpenseFormProps {
-  onSubmit: (expense: Omit<Expense, "id" | "projectId">) => void;
+  onSubmit: (expense: { date: string; description: string; amount: number; category: ExpenseCategory }) => void;
   onCancel: () => void;
+  isLoading?: boolean;
 }
 
-export const ExpenseForm = ({ onSubmit, onCancel }: ExpenseFormProps) => {
+export const ExpenseForm = ({ onSubmit, onCancel, isLoading }: ExpenseFormProps) => {
   const [date, setDate] = useState<Date>(new Date());
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
@@ -112,10 +113,12 @@ export const ExpenseForm = ({ onSubmit, onCancel }: ExpenseFormProps) => {
       </div>
 
       <div className="flex justify-end gap-2">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
           Cancel
         </Button>
-        <Button type="submit">Add Expense</Button>
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? "Adding..." : "Add Expense"}
+        </Button>
       </div>
     </form>
   );

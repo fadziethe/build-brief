@@ -14,7 +14,95 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      expenses: {
+        Row: {
+          amount: number
+          category: Database["public"]["Enums"]["expense_category"]
+          created_at: string
+          date: string
+          description: string
+          id: string
+          project_id: string
+        }
+        Insert: {
+          amount: number
+          category: Database["public"]["Enums"]["expense_category"]
+          created_at?: string
+          date?: string
+          description: string
+          id?: string
+          project_id: string
+        }
+        Update: {
+          amount?: number
+          category?: Database["public"]["Enums"]["expense_category"]
+          created_at?: string
+          date?: string
+          description?: string
+          id?: string
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          budget: number
+          client: string
+          created_at: string
+          description: string | null
+          end_date: string
+          id: string
+          initial_amount: number
+          manager: string
+          name: string
+          progress: number
+          spent: number
+          start_date: string
+          status: Database["public"]["Enums"]["project_status"]
+          updated_at: string
+        }
+        Insert: {
+          budget?: number
+          client: string
+          created_at?: string
+          description?: string | null
+          end_date: string
+          id?: string
+          initial_amount?: number
+          manager: string
+          name: string
+          progress?: number
+          spent?: number
+          start_date: string
+          status?: Database["public"]["Enums"]["project_status"]
+          updated_at?: string
+        }
+        Update: {
+          budget?: number
+          client?: string
+          created_at?: string
+          description?: string | null
+          end_date?: string
+          id?: string
+          initial_amount?: number
+          manager?: string
+          name?: string
+          progress?: number
+          spent?: number
+          start_date?: string
+          status?: Database["public"]["Enums"]["project_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +111,16 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      expense_category:
+        | "labor"
+        | "materials"
+        | "equipment"
+        | "permits"
+        | "subcontractors"
+        | "transport"
+        | "utilities"
+        | "other"
+      project_status: "planning" | "in-progress" | "on-hold" | "completed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +247,18 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      expense_category: [
+        "labor",
+        "materials",
+        "equipment",
+        "permits",
+        "subcontractors",
+        "transport",
+        "utilities",
+        "other",
+      ],
+      project_status: ["planning", "in-progress", "on-hold", "completed"],
+    },
   },
 } as const
