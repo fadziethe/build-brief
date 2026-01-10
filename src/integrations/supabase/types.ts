@@ -68,6 +68,7 @@ export type Database = {
           start_date: string
           status: Database["public"]["Enums"]["project_status"]
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           budget?: number
@@ -84,6 +85,7 @@ export type Database = {
           start_date: string
           status?: Database["public"]["Enums"]["project_status"]
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           budget?: number
@@ -100,6 +102,7 @@ export type Database = {
           start_date?: string
           status?: Database["public"]["Enums"]["project_status"]
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }

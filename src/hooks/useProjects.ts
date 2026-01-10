@@ -71,9 +71,12 @@ export const useCreateProject = () => {
   
   return useMutation({
     mutationFn: async (project: CreateProjectInput) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("You must be logged in to create a project");
+      
       const { data, error } = await supabase
         .from("projects")
-        .insert(project)
+        .insert({ ...project, user_id: user.id })
         .select()
         .single();
       
