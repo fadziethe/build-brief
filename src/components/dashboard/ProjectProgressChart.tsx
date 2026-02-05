@@ -9,9 +9,57 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
-import { projectProgressData } from "@/data/mockData";
+import { useProjects } from "@/hooks/useProjects";
+import { Loader2 } from "lucide-react";
+
+const getProgressColor = (status: string) => {
+  switch (status) {
+    case "completed":
+      return "hsl(var(--chart-3))";
+    case "in-progress":
+      return "hsl(var(--chart-1))";
+    case "on-hold":
+      return "hsl(var(--chart-4))";
+    default:
+      return "hsl(var(--chart-2))";
+  }
+};
 
 export function ProjectProgressChart() {
+  const { data: projects = [], isLoading } = useProjects();
+
+  const progressData = projects.map((p) => ({
+    name: p.name.split(" ").slice(0, 2).join(" "),
+    progress: p.progress,
+    fill: getProgressColor(p.status),
+  }));
+
+  if (isLoading) {
+    return (
+      <Card className="animate-slide-up border-0 shadow-lg" style={{ animationDelay: "200ms" }}>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg font-semibold">Project Progress</CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center h-[300px]">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (progressData.length === 0) {
+    return (
+      <Card className="animate-slide-up border-0 shadow-lg" style={{ animationDelay: "200ms" }}>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg font-semibold">Project Progress</CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center h-[300px] text-muted-foreground">
+          No projects to display
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="animate-slide-up border-0 shadow-lg" style={{ animationDelay: "200ms" }}>
       <CardHeader className="pb-2">
@@ -21,7 +69,7 @@ export function ProjectProgressChart() {
         <div className="h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
-              data={projectProgressData}
+              data={progressData}
               layout="vertical"
               margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
             >
@@ -51,7 +99,7 @@ export function ProjectProgressChart() {
                 formatter={(value: number) => [`${value}%`, "Progress"]}
               />
               <Bar dataKey="progress" radius={[0, 6, 6, 0]} barSize={24}>
-                {projectProgressData.map((entry, index) => (
+                {progressData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.fill} />
                 ))}
               </Bar>

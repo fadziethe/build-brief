@@ -9,7 +9,9 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
-import { budgetTrends } from "@/data/mockData";
+import { useProjects } from "@/hooks/useProjects";
+import { Loader2 } from "lucide-react";
+import { useMemo } from "react";
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat("en-US", {
@@ -21,6 +23,64 @@ const formatCurrency = (value: number) => {
 };
 
 export function BudgetTrendChart() {
+  const { data: projects = [], isLoading } = useProjects();
+
+  // Generate budget trend data from real projects
+  const budgetTrends = useMemo(() => {
+    if (projects.length === 0) return [];
+
+    // Get the last 6 months
+    const months = [];
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push({
+        month: date.toLocaleString('default', { month: 'short' }),
+        date,
+      });
+    }
+
+    // Calculate cumulative budget and spent for each month
+    const totalBudget = projects.reduce((sum, p) => sum + Number(p.budget), 0);
+    const totalSpent = projects.reduce((sum, p) => sum + Number(p.spent), 0);
+
+    // Simulate a trend based on project progress
+    return months.map((m, index) => {
+      const progressFactor = (index + 1) / 6;
+      return {
+        month: m.month,
+        budget: Math.round(totalBudget * progressFactor),
+        actual: Math.round(totalSpent * progressFactor),
+      };
+    });
+  }, [projects]);
+
+  if (isLoading) {
+    return (
+      <Card className="animate-slide-up border-0 shadow-lg" style={{ animationDelay: "400ms" }}>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg font-semibold">Budget vs Actual Spending</CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center h-[300px]">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (budgetTrends.length === 0) {
+    return (
+      <Card className="animate-slide-up border-0 shadow-lg" style={{ animationDelay: "400ms" }}>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg font-semibold">Budget vs Actual Spending</CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center h-[300px] text-muted-foreground">
+          No budget data to display
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="animate-slide-up border-0 shadow-lg" style={{ animationDelay: "400ms" }}>
       <CardHeader className="pb-2">
