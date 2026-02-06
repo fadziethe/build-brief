@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { loginSchema, signupSchema, formatZodError } from "@/lib/validations";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ const Auth = () => {
   // Signup form state
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
+  const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
   const [signupName, setSignupName] = useState("");
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -27,9 +29,19 @@ const Auth = () => {
     setIsLoading(true);
     
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      // Validate input before authentication
+      const validationResult = loginSchema.safeParse({
         email: loginEmail,
         password: loginPassword,
+      });
+      
+      if (!validationResult.success) {
+        throw new Error(formatZodError(validationResult.error));
+      }
+
+      const { error } = await supabase.auth.signInWithPassword({
+        email: validationResult.data.email,
+        password: validationResult.data.password,
       });
       
       if (error) throw error;
@@ -48,9 +60,20 @@ const Auth = () => {
     setIsLoading(true);
     
     try {
-      const { error } = await supabase.auth.signUp({
+      // Validate input before authentication
+      const validationResult = signupSchema.safeParse({
         email: signupEmail,
         password: signupPassword,
+        confirmPassword: signupConfirmPassword,
+      });
+      
+      if (!validationResult.success) {
+        throw new Error(formatZodError(validationResult.error));
+      }
+
+      const { error } = await supabase.auth.signUp({
+        email: validationResult.data.email,
+        password: validationResult.data.password,
         options: {
           data: { full_name: signupName },
           emailRedirectTo: window.location.origin,
@@ -59,8 +82,7 @@ const Auth = () => {
       
       if (error) throw error;
       
-      toast.success("Account created! You can now log in.");
-      navigate("/");
+      toast.success("Account created! Please check your email to verify your account.");
     } catch (error: any) {
       toast.error(error.message || "Failed to sign up");
     } finally {
@@ -170,6 +192,22 @@ const Auth = () => {
                       className="pl-9"
                       value={signupPassword}
                       onChange={(e) => setSignupPassword(e.target.value)}
+                      required
+                      minLength={6}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-confirm-password">Confirm Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="signup-confirm-password"
+                      type="password"
+                      placeholder="••••••••"
+                      className="pl-9"
+                      value={signupConfirmPassword}
+                      onChange={(e) => setSignupConfirmPassword(e.target.value)}
                       required
                       minLength={6}
                     />

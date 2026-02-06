@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { teamMemberSchema, formatZodError } from "@/lib/validations";
 
 export interface TeamMember {
   id: string;
@@ -49,10 +50,22 @@ export const useTeamMembers = () => {
     mutationFn: async (member: TeamMemberInsert) => {
       if (!user) throw new Error("User not authenticated");
 
+      // Validate input before database operation
+      const validationResult = teamMemberSchema.safeParse(member);
+      if (!validationResult.success) {
+        throw new Error(formatZodError(validationResult.error));
+      }
+
+      const validatedData = validationResult.data;
+
       const { data, error } = await supabase
         .from("team_members")
         .insert({
-          ...member,
+          name: validatedData.name,
+          role: validatedData.role,
+          email: validatedData.email,
+          phone: validatedData.phone || null,
+          status: validatedData.status,
           user_id: user.id,
         })
         .select()
@@ -75,9 +88,38 @@ export const useTeamMembers = () => {
       id,
       ...updates
     }: Partial<TeamMember> & { id: string }) => {
+      // Validate input before database operation (partial validation for updates)
+      const updateData: Record<string, unknown> = {};
+      
+      if (updates.name !== undefined) {
+        const nameResult = teamMemberSchema.shape.name.safeParse(updates.name);
+        if (!nameResult.success) throw new Error(formatZodError(nameResult.error));
+        updateData.name = nameResult.data;
+      }
+      if (updates.role !== undefined) {
+        const roleResult = teamMemberSchema.shape.role.safeParse(updates.role);
+        if (!roleResult.success) throw new Error(formatZodError(roleResult.error));
+        updateData.role = roleResult.data;
+      }
+      if (updates.email !== undefined) {
+        const emailResult = teamMemberSchema.shape.email.safeParse(updates.email);
+        if (!emailResult.success) throw new Error(formatZodError(emailResult.error));
+        updateData.email = emailResult.data;
+      }
+      if (updates.phone !== undefined) {
+        const phoneResult = teamMemberSchema.shape.phone.safeParse(updates.phone);
+        if (!phoneResult.success) throw new Error(formatZodError(phoneResult.error));
+        updateData.phone = phoneResult.data || null;
+      }
+      if (updates.status !== undefined) {
+        const statusResult = teamMemberSchema.shape.status.safeParse(updates.status);
+        if (!statusResult.success) throw new Error(formatZodError(statusResult.error));
+        updateData.status = statusResult.data;
+      }
+
       const { data, error } = await supabase
         .from("team_members")
-        .update(updates)
+        .update(updateData)
         .eq("id", id)
         .select()
         .single();
