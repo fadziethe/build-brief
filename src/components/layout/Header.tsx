@@ -1,9 +1,10 @@
-import { Bell, Search, LogOut } from "lucide-react";
+import { Search, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { NotificationDropdown } from "./NotificationDropdown";
 
 export function Header() {
   const { signOut, user } = useAuth();
@@ -27,16 +28,11 @@ export function Header() {
         </div>
       </div>
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-foreground">
-          <Bell className="h-5 w-5" />
-          <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-accent-foreground">
-            3
-          </span>
-        </Button>
+        <NotificationDropdown />
         {user && (
           <div className="flex items-center gap-3 border-l border-border pl-3">
             <span className="text-sm text-muted-foreground hidden sm:block">
-              {user.email}
+              Tatenda Soza
             </span>
             <Button 
               variant="ghost" 
