@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { expenseSchema, formatZodError } from "@/lib/validations";
 
 export type ExpenseCategory = 
   | "labor"
@@ -63,9 +64,23 @@ export const useCreateExpense = () => {
   
   return useMutation({
     mutationFn: async (expense: CreateExpenseInput) => {
+      // Validate input before database operation
+      const validationResult = expenseSchema.safeParse(expense);
+      if (!validationResult.success) {
+        throw new Error(formatZodError(validationResult.error));
+      }
+
+      const validatedData = validationResult.data;
+
       const { data, error } = await supabase
         .from("expenses")
-        .insert(expense)
+        .insert({
+          project_id: validatedData.project_id,
+          date: validatedData.date,
+          description: validatedData.description,
+          amount: validatedData.amount,
+          category: validatedData.category,
+        })
         .select()
         .single();
       
