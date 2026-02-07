@@ -202,7 +202,7 @@ const DocumentCard = ({ doc, index, projectName, onDownload, onDelete }: Documen
 const Documents = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeTab, setActiveTab] = useState<DocumentCategory>("all");
-  const [selectedProjectId, setSelectedProjectId] = useState<string>("");
+  const [selectedProjectId, setSelectedProjectId] = useState<string>("none");
   const { documents, isLoading, uploadDocument, downloadDocument, deleteDocument } =
     useDocuments();
   const { data: projects = [] } = useProjects();
@@ -220,7 +220,7 @@ const Documents = () => {
       for (const file of Array.from(files)) {
         await uploadDocument.mutateAsync({
           file,
-          projectId: selectedProjectId || undefined,
+          projectId: selectedProjectId === "none" ? undefined : selectedProjectId,
         });
       }
     }
@@ -292,7 +292,7 @@ const Documents = () => {
                 <SelectValue placeholder="Link to project (optional)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No project</SelectItem>
+                <SelectItem value="none">No project</SelectItem>
                 {projects.map((project) => (
                   <SelectItem key={project.id} value={project.id}>
                     {project.name}
